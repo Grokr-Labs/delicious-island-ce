@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>Delicious Island Updates</title>
+        <link>https://github.com/Grokr-Labs/delicious-island-pe</link>
+        <description>Most recent updates to Delicious Island</description>
+        <language>en</language>
+        <!--
+            This appcast is automatically updated by the build-release workflow.
+            Do not edit manually - changes will be overwritten on next release.
+
+            To trigger a new release:
+            1. Push a commit with conventional commit message (feat:, fix:, etc.)
+            2. semantic-release will create a new version tag
+            3. build-release.yml will build, sign, notarize, and update this appcast
+        -->
+    </channel>
+</rss>

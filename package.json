@@ -1,0 +1,27 @@
+{
+  "name": "delicious-island",
+  "version": "0.1.0",
+  "description": "A macOS menu bar app that brings Dynamic Island-style notifications to Claude Code CLI sessions",
+  "private": true,
+  "scripts": {
+    "release": "semantic-release",
+    "release:dry-run": "semantic-release --dry-run",
+    "version:update": "./scripts/update-version.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JonathanWorks/Claude-Island.git"
+  },
+  "author": "Jonathan Works",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/JonathanWorks/Claude-Island/issues"
+  },
+  "homepage": "https://github.com/JonathanWorks/Claude-Island#readme",
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "semantic-release": "^25.0.2"
+  }
+}

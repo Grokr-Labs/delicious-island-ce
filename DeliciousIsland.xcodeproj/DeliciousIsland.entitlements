@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- REQUIRED: Enable App Sandbox -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    
+    <!-- Network access for Claude API -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+    <!-- File system access (your app monitors processes and files) -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    
+    <!-- Temporary exception for accessing absolute paths (e.g., /dev/tty, /bin/ps) -->
+    <!-- This is needed for process monitoring but may require justification -->
+    <key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
+    <array>
+        <string>/bin/</string>
+        <string>/usr/bin/</string>
+        <string>/usr/sbin/</string>
+        <string>/dev/</string>
+    </array>
+    
+    <!-- Allow execution of external programs (ps, lsof, tmux, yabai) -->
+    <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+    <array>
+        <string>*</string>
+    </array>
+    
+    <!-- Audio playback for notifications -->
+    <key>com.apple.security.device.audio-input</key>
+    <false/>
+</dict>
+</plist>
