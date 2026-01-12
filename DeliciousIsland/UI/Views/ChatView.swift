@@ -332,19 +332,11 @@ struct ChatView: View {
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: history.count)
             }
             .scaleEffect(x: 1, y: -1)
-            .onScrollGeometryChange(for: Bool.self) { geometry in
-                // Check if we're near the top of the content (which is bottom in inverted view)
-                // contentOffset.y near 0 means at bottom, larger means scrolled up
-                geometry.contentOffset.y < 50
-            } action: { wasAtBottom, isNowAtBottom in
-                if wasAtBottom && !isNowAtBottom {
-                    // User scrolled away from bottom
-                    pauseAutoscroll()
-                } else if !wasAtBottom && isNowAtBottom && isAutoscrollPaused {
-                    // User scrolled back to bottom
-                    resumeAutoscroll()
-                }
-            }
+            .modifier(ScrollGeometryChangeModifier(
+                pauseAutoscroll: pauseAutoscroll,
+                resumeAutoscroll: resumeAutoscroll,
+                isAutoscrollPaused: isAutoscrollPaused
+            ))
             .onChange(of: shouldScrollToBottom) { _, shouldScroll in
                 if shouldScroll {
                     withAnimation(.easeOut(duration: 0.3)) {
@@ -1755,6 +1747,31 @@ struct NewMessagesIndicator: View {
             withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
                 isHovering = hovering
             }
+        }
+    }
+}
+
+// MARK: - ScrollGeometryChangeModifier
+
+private struct ScrollGeometryChangeModifier: ViewModifier {
+    let pauseAutoscroll: () -> Void
+    let resumeAutoscroll: () -> Void
+    let isAutoscrollPaused: Bool
+
+    func body(content: Content) -> some View {
+        if #available(macOS 15.0, *) {
+            content
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    geometry.contentOffset.y < 50
+                } action: { wasAtBottom, isNowAtBottom in
+                    if wasAtBottom && !isNowAtBottom {
+                        pauseAutoscroll()
+                    } else if !wasAtBottom && isNowAtBottom && isAutoscrollPaused {
+                        resumeAutoscroll()
+                    }
+                }
+        } else {
+            content
         }
     }
 }
