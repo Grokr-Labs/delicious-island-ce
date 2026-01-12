@@ -77,6 +77,7 @@ jobs:
       - name: Build and Archive
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
         run: |
           xcodebuild archive \
             -scheme "$SCHEME" \
@@ -84,7 +85,8 @@ jobs:
             -configuration Release \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Developer ID Application" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID"
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            MARKETING_VERSION="$BUILD_VERSION"
 
       - name: Export Archive
         env:
