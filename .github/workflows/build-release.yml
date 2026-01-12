@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -24,10 +30,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get version from tag
+      - name: Get version
         id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          GIT_REF: ${{ github.ref }}
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+          else
+            VERSION=${GIT_REF#refs/tags/v}
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
@@ -76,22 +90,21 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          cat > build/ExportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>developer-id</string>
-              <key>teamID</key>
-              <string>$APPLE_TEAM_ID</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>signingCertificate</key>
-              <string>Developer ID Application</string>
-          </dict>
-          </plist>
-          EOF
+          mkdir -p build
+          echo '<?xml version="1.0" encoding="UTF-8"?>' > build/ExportOptions.plist
+          echo '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' >> build/ExportOptions.plist
+          echo '<plist version="1.0">' >> build/ExportOptions.plist
+          echo '<dict>' >> build/ExportOptions.plist
+          echo '    <key>method</key>' >> build/ExportOptions.plist
+          echo '    <string>developer-id</string>' >> build/ExportOptions.plist
+          echo '    <key>teamID</key>' >> build/ExportOptions.plist
+          echo "    <string>$APPLE_TEAM_ID</string>" >> build/ExportOptions.plist
+          echo '    <key>signingStyle</key>' >> build/ExportOptions.plist
+          echo '    <string>manual</string>' >> build/ExportOptions.plist
+          echo '    <key>signingCertificate</key>' >> build/ExportOptions.plist
+          echo '    <string>Developer ID Application</string>' >> build/ExportOptions.plist
+          echo '</dict>' >> build/ExportOptions.plist
+          echo '</plist>' >> build/ExportOptions.plist
 
           xcodebuild -exportArchive \
             -archivePath build/DeliciousIsland.xcarchive \
@@ -174,29 +187,28 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           DMG_PATH="releases/DeliciousIsland-CE-$VERSION.dmg"
 
-          # Build release notes
-          RELEASE_NOTES="## Delicious Island Community Edition v$VERSION
-
-          ### Installation
-          1. Download the DMG file below
-          2. Open the DMG and drag Delicious Island to Applications
-          3. Launch from Applications
-
-          ### Premium Features
-          Want MCP Task Router, Tmux Integration, and Auto-Updates?
-          Check out [Delicious Island Premium](https://grokr-labs.com/delicious-island)"
+          # Build release notes file
+          echo "## Delicious Island Community Edition v$VERSION" > $RUNNER_TEMP/release_body.md
+          echo "" >> $RUNNER_TEMP/release_body.md
+          echo "### Installation" >> $RUNNER_TEMP/release_body.md
+          echo "1. Download the DMG file below" >> $RUNNER_TEMP/release_body.md
+          echo "2. Open the DMG and drag Delicious Island to Applications" >> $RUNNER_TEMP/release_body.md
+          echo "3. Launch from Applications" >> $RUNNER_TEMP/release_body.md
+          echo "" >> $RUNNER_TEMP/release_body.md
+          echo "### Premium Features" >> $RUNNER_TEMP/release_body.md
+          echo "Want MCP Task Router, Tmux Integration, and Auto-Updates?" >> $RUNNER_TEMP/release_body.md
+          echo "Check out [Delicious Island Premium](https://grokr-labs.com/delicious-island)" >> $RUNNER_TEMP/release_body.md
 
           if [ -f "$RUNNER_TEMP/release_notes.md" ]; then
-            RELEASE_NOTES="$RELEASE_NOTES
-
-          ### Changes
-          $(cat $RUNNER_TEMP/release_notes.md)"
+            echo "" >> $RUNNER_TEMP/release_body.md
+            echo "### Changes" >> $RUNNER_TEMP/release_body.md
+            cat $RUNNER_TEMP/release_notes.md >> $RUNNER_TEMP/release_body.md
           fi
 
           # Create release with DMG
-          echo "$RELEASE_NOTES" | gh release create "v$VERSION" \
+          gh release create "v$VERSION" \
             --title "Delicious Island CE v$VERSION" \
-            --notes-file - \
+            --notes-file $RUNNER_TEMP/release_body.md \
             "$DMG_PATH"
 
       - name: Cleanup Keychain
